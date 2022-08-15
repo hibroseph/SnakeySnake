@@ -62,7 +62,18 @@
                             this.gameState = 'Dead'
                             this.gameOver = true;
                             return true;
-                        } 
+                        }
+                        
+                    // see if snake touches itself at all
+                    for(i = 1; i <= this.snake.body.length - 1; i++) {
+                        if (this.snake.body[0].x == this.snake.body[i].x
+                        && this.snake.body[0].y == this.snake.body[i].y) {
+                            console.log("YOU RAN INTO YOURSELF DEAD BOY")
+                            this.gameState = 'Dead'
+                            this.gameOver = true;
+                            return true;
+                        }
+                    }
                     return false;
                 }
 
@@ -73,11 +84,11 @@
                         if (this.isEndGame()) {
                             this.killGameLoop();
                             this.displayGameOver(context);
+                            return;
                         }
                         
                         if (this.doesSnakeEatFood()) {
                             this.snake.grow();
-                            console.log("YES SNAKE ATE FOOD")
                             this.food = new Food();
                         }
                         this.paint(context)
