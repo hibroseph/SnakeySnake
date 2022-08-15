@@ -1,0 +1,207 @@
+<html>
+    <head>
+        <script>
+            function Score () {
+
+                this.draw = (context, snake) => {
+                    context.font = '24px Courier New';
+                    let measuredText = context.measureText('Score: ')
+                    context.fillText('Score:',0,15 )
+                    context.fillText(snake.body.length, measuredText.width, 15)
+                }
+            }
+            function Game(width, height) {
+                this.width = width;
+                this.height = height;
+                this.snake = new Snake();
+                this.gameTimerId;
+                this.gameState = 'Loading'
+                this.refreshRateSeconds = 0.5
+                this.gameOver = false;
+                this.food = new Food();
+                this.score = new Score(this.snake)
+
+                this.restartGame = (context) => {
+                    this.gameState = 'Running'
+                    this.gameOver = false;
+                    this.snake = new Snake();
+                    this.startGameLoop(context);
+                }
+
+                this.paint = (context) => {
+                    if (!this.gameOver) {
+                        context.clearRect(0,0, width, height);
+                    }
+
+                    this.food.draw(context);
+                    this.snake.draw(context);
+                    this.score.draw(context, this.snake)
+                }
+
+                this.init = (context) => {
+                    // register handlers
+                    window.addEventListener('keydown', (event) => {
+                        if (event.code == 'ArrowLeft' || event.code == 'ArrowRight' || event.code == 'ArrowDown' || event.code == 'ArrowUp') {
+                            this.snake.changeDirection(event.code);
+                        }
+
+                        if (event.code == 'Enter') {
+                            this.restartGame(context);
+                        }
+                    })
+                }
+
+                this.killGameLoop = () => {
+                    clearInterval(this.gameTimerId);
+                }
+
+                this.isEndGame = () => {
+                    if (this.snake.body[0].x >= 500 || this.snake.body[0].x < 0
+                        || this.snake.body[0].y < 0 || this.snake.body[0].y >= 500) {
+                            console.log("YOUR DEAD BOY")
+                            this.gameState = 'Dead'
+                            this.gameOver = true;
+                            return true;
+                        } 
+                    return false;
+                }
+
+                this.startGameLoop = (context) => {
+                    this.gameState = 'Running';
+                    this.gameTimerId = setInterval(() => {
+                        this.snake.move()
+                        if (this.isEndGame()) {
+                            this.killGameLoop();
+                            this.displayGameOver(context);
+                        }
+                        
+                        if (this.doesSnakeEatFood()) {
+                            this.snake.grow();
+                            console.log("YES SNAKE ATE FOOD")
+                            this.food = new Food();
+                        }
+                        this.paint(context)
+                        
+                    }, this.refreshRateSeconds * 1000)
+                }
+
+                this.doesSnakeEatFood = () => {
+                    if (this.snake.body[0].x == this.food.x && this.snake.body[0].y == this.food.y) {
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                this.displayGameOver = (context) => {
+                    context.fillStyle = 'Red'
+                    context.font = 'bold 48px Helvetica red';
+                    let measuredText = context.measureText('You ded :(')
+                    context.fillText('You ded :(',250 - (measuredText.width / 2),200)
+                }
+            }
+
+            function Food() {
+                let randomX = Math.floor(Math.random() * 500);
+                let randomY = Math.floor(Math.random() * 500);
+                this.x = randomX - (randomX % 50) 
+                this.y = randomY - (randomY % 50)
+
+                this.draw = (context) => {
+                    context.fillStyle = 'Cyan'
+                    context.fillRect(this.x, this.y, 50, 50)
+                }
+            }
+
+            function Snake() {
+                this.length = 1;
+                this.direction = 'R'
+                
+                this.body = [{x: 0,y:0}]
+
+
+                this.changeDirection = (code) => {
+                    switch(code) {
+                        case 'ArrowLeft':
+                            this.direction = 'L'
+                            break;
+                        case 'ArrowRight':
+                            this.direction = 'R'
+                            break;
+                        case 'ArrowDown':
+                            this.direction = 'D'
+                            break;
+                        case 'ArrowUp':
+                            this.direction = 'U'
+                            break;
+                    }
+                }
+
+                this.grow = () => {
+                    length++;
+                    this.body.push({x: this.body[this.body.length -1].x, y: this.body[this.body.length -1].y});
+                }
+
+                this.move = () => {
+                    for (var i = this.body.length - 1; i >= 0; i--) {
+
+                        if (i != 0) {
+                            this.body[i] = {x:this.body[i-1].x, y: this.body[i-1].y};
+                        }
+
+                        if (i == 0) {
+                            if (this.direction == 'L') {
+                                this.body[i].x -= 50;
+                            } else if (this.direction == 'R') {
+                                this.body[i].x += 50;
+                            } else if (this.direction == 'U') {
+                                this.body[i].y -= 50;
+                            } else if (this.direction = 'D') {
+                                this.body[i].y += 50;
+                            }
+                        }
+
+                        
+                    }
+
+                    
+                }
+
+                this.draw = (context) => {
+                    context.fillStyle = 'Black';
+                    for (var i = 0; i < this.body.length; i++) {
+                        context.fillRect(this.body[i].x, this.body[i].y, 50, 50);
+                    }
+                }
+            }
+            
+
+            function snakeGame() {
+        
+                let canvas = document.getElementById("main");
+    
+                let context = canvas.getContext('2d');
+                let canvasWidth = 500;
+                let canvasHeight = 500;
+
+                const snakeGame = new Game(canvasWidth, canvasHeight);
+
+                snakeGame.init(context);
+                snakeGame.startGameLoop(context);
+            }
+
+
+        </script>
+        <style>
+            canvas {
+                border: 1px black solid; 
+            }
+        </style>
+    </head>
+   
+    <body onload="snakeGame();">
+        <canvas id="main" width="500" height="500">
+
+        </canvas>
+    </body>
+</html>
