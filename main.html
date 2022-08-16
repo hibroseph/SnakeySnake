@@ -6,10 +6,12 @@
                 this.draw = (context, snake) => {
                     context.font = '24px Courier New';
                     let measuredText = context.measureText('Score: ')
+                    context.fillStyle = 'Blue';
                     context.fillText('Score:',0,15 )
                     context.fillText(snake.body.length, measuredText.width, 15)
                 }
             }
+            
             function Game(width, height) {
                 this.width = width;
                 this.height = height;
@@ -58,17 +60,15 @@
                 this.isEndGame = () => {
                     if (this.snake.body[0].x >= 500 || this.snake.body[0].x < 0
                         || this.snake.body[0].y < 0 || this.snake.body[0].y >= 500) {
-                            console.log("YOUR DEAD BOY")
                             this.gameState = 'Dead'
                             this.gameOver = true;
                             return true;
                         }
                         
                     // see if snake touches itself at all
-                    for(i = 1; i <= this.snake.body.length - 1; i++) {
+                    for(i = 1; i < this.snake.body.length - 1; i++) {
                         if (this.snake.body[0].x == this.snake.body[i].x
                         && this.snake.body[0].y == this.snake.body[i].y) {
-                            console.log("YOU RAN INTO YOURSELF DEAD BOY")
                             this.gameState = 'Dead'
                             this.gameOver = true;
                             return true;
@@ -77,6 +77,7 @@
                     return false;
                 }
 
+                // Game loop runs at 30 FPS (33 times in a second)
                 this.startGameLoop = (context) => {
                     this.gameState = 'Running';
                     this.gameTimerId = setInterval(() => {
@@ -93,12 +94,14 @@
                         }
                         this.paint(context)
                         
-                    }, this.refreshRateSeconds * 1000)
+                    }, 33.33333333)
                 }
 
                 this.doesSnakeEatFood = () => {
-                    if (this.snake.body[0].x == this.food.x && this.snake.body[0].y == this.food.y) {
-                        return true;
+                    for (var i = 0 ; i < this.snake.body.length; i++) {
+                        if (this.snake.body[i].x == this.food.x && this.snake.body[i].y == this.food.y) {
+                            return true;
+                        }
                     }
 
                     return false;
@@ -127,7 +130,8 @@
             function Snake() {
                 this.length = 1;
                 this.direction = 'R'
-                
+                this.lastMoveTime = Date.now();
+                this.updateEveryMs = 500;
                 this.body = [{x: 0,y:0}]
 
 
@@ -151,30 +155,36 @@
                 this.grow = () => {
                     length++;
                     this.body.push({x: this.body[this.body.length -1].x, y: this.body[this.body.length -1].y});
+
+                    if (this.updateEveryMs > 350) {
+                        this.updateEveryMs -= 50;
+                    } else if (this.updateEveryMs <= 350) {
+                        this.updateEveryMs -= 10;
+                    }
                 }
 
                 this.move = () => {
-                    for (var i = this.body.length - 1; i >= 0; i--) {
+                    if (Date.now() - this.lastMoveTime > this.updateEveryMs ) {
+                        this.lastMoveTime = Date.now();
+                    // how often do we want to move
+                        for (var i = this.body.length - 1; i >= 0; i--) {
+                            if (i != 0) {
+                                this.body[i] = {x:this.body[i-1].x, y: this.body[i-1].y};
+                            }
 
-                        if (i != 0) {
-                            this.body[i] = {x:this.body[i-1].x, y: this.body[i-1].y};
-                        }
-
-                        if (i == 0) {
-                            if (this.direction == 'L') {
-                                this.body[i].x -= 50;
-                            } else if (this.direction == 'R') {
-                                this.body[i].x += 50;
-                            } else if (this.direction == 'U') {
-                                this.body[i].y -= 50;
-                            } else if (this.direction = 'D') {
-                                this.body[i].y += 50;
+                            if (i == 0) {
+                                if (this.direction == 'L') {
+                                    this.body[i].x -= 50;
+                                } else if (this.direction == 'R') {
+                                    this.body[i].x += 50;
+                                } else if (this.direction == 'U') {
+                                    this.body[i].y -= 50;
+                                } else if (this.direction = 'D') {
+                                    this.body[i].y += 50;
+                                }
                             }
                         }
-
-                        
                     }
-
                     
                 }
 
